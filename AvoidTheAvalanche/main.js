@@ -103,6 +103,7 @@ App.onStart.Add(function() {
 });
 
 // when player join the space event
+// 플레이어가 스페이스에 입장 했을 때 이벤트
 App.onJoinPlayer.Add(function(p) {
     // create and utilize option data using tags.
     if(_start)
@@ -115,13 +116,15 @@ App.onJoinPlayer.Add(function(p) {
         p.moveSpeed = 20;
         // change sprite image
         p.sprite = tomb;
-        // when player property changed, have to call this method
+        // when player property changed have to call this method
+        // 플레이어 속성 변경 시 반드시 호출하여 업데이트 한다.
         p.sendUpdated();
     }
     _players = App.players;
 });
 
 // when player leave the space event
+// 플레이어가 스페이스를 나갔을 때 이벤트
 App.onLeavePlayer.Add(function(p) {
     p.title = null;
     p.sprite = null;
@@ -132,6 +135,7 @@ App.onLeavePlayer.Add(function(p) {
 });
 
 // when player touched objects event
+// 플레이어가 오브젝트와 부딪혔을 때 
 App.onObjectTouched.Add(function(sender, x, y, tileID) {
     if(!_start)
         return;
@@ -165,6 +169,7 @@ App.onObjectTouched.Add(function(sender, x, y, tileID) {
 });
 
 // when the game block is pressed event
+// 게임 블록을 밟았을 때 호출되는 이벤트
 App.onDestroy.Add(function() {
     for(let i in _poops) {
         let b = _poops[i];
@@ -173,6 +178,7 @@ App.onDestroy.Add(function() {
 });
 
 // called every 20ms
+// 20ms 마다 호출되는 업데이트
 // param1 : deltatime ( elapsedTime )
 App.onUpdate.Add(function(dt) {
     if(!_start)
