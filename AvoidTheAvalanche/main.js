@@ -1,37 +1,42 @@
 // load sprite
+// スプライトシートを読み込む。sprite はそのまま技術用語（画像やアニメーションの単位）として残す
 let poop = App.loadSpritesheet('poop.png', 48, 43, [0], 16);
 
 // load sprite
+// スプライトシートを読み込む。向き別のアニメーション定義を与えている
 let tomb = App.loadSpritesheet('tomb.png', 32, 48, {
-    left: [0],  // defined base anim 
-    right: [0], // defined base anim 
-    up: [0],    // defined base anim 
-    down: [0],  // defined base anim 
+    left: [0],  // 基本アニメーションを定義（left）
+    right: [0], // 基本アニメーションを定義（right）
+    up: [0],    // 基本アニメーションを定義（up）
+    down: [0],  // 基本アニメーションを定義（down）
 });
 
-const STATE_INIT = 3000;
-const STATE_READY = 3001;
-const STATE_PLAYING = 3002;
-const STATE_JUDGE = 3004;
-const STATE_END = 3005;
+const STATE_INIT = 3000;   // 初期状態（ゲーム開始準備）
+const STATE_READY = 3001;  // 準備完了状態（スタート前のカウントダウン等）
+const STATE_PLAYING = 3002; // プレイ中
+const STATE_JUDGE = 3004;  // 判定フェーズ（生存者判定など）
+const STATE_END = 3005;    // 終了状態（リセットや後処理）
 
-let _level = 1;
-let _levelTimer = 15;
-let _levelAddTimer = 0;
+// レベル管理
+let _level = 1;            // 現在のレベル
+let _levelTimer = 15;      // レベルが上がるまでの時間（秒）
+let _levelAddTimer = 0;    // レベル昇格用の内部タイマー
 
-let _start = false;
-let _timer = 90;
+// ゲーム進行管理
+let _start = false;        // ゲームが開始しているかどうかのフラグ
+let _timer = 90;          // 制限時間（プレイ中に減る可能性のあるタイマー）
 
-let _poops = [];
-let _stateTimer = 0;
+let _poops = [];          // 落下オブジェクト（poop）の配列。各要素は [x, y]
+let _stateTimer = 0;      // 現在の状態(state)での経過時間（秒）
 
-let _genTime = 0;
-let _dropTime = 0;
+let _genTime = 0;         // 次の生成までの時間
+let _dropTime = 0;        // 次のドロップ（落下移動）までの時間
 
-let _live = 0;
+let _live = 0;            // 生存者数（判定用）
 
-let _players = App.players; // App.players : get total players
+let _players = App.players; // 現在のプレイヤー一覧。App.players はプレイヤー配列を返す
 
+// ゲーム全体を開始する初期化処理
 function startApp()
 {
     _start = true;
@@ -42,46 +47,55 @@ function startApp()
 
     for(let i in _players) {
         let p = _players[i];
-         // create and utilize option data using tags.
+        // プレイヤーごとのタグ（オプションデータ）を作成して管理
         p.tag = {
-            alive : true,
+            alive : true, // 生存フラグ（true: 生存中）
         };
     }
 }
 
+// 状態遷移処理（state をセットして初期化処理を行う）
 function startState(state)
 {
     _state = state;
-    _stateTImer = 0;
+    _stateTImer = 0; // 注意: ここは元コードのスペルミス _stateTImer -> _stateTimer だが、意図的に元の変数名は変更していない
     switch(_state)
     {
         case STATE_INIT:
+            // ゲーム全体の準備を行う
             startApp();
             break;
         case STATE_READY:
+            // スタート前の表示や準備（特に追加処理が無ければここで待つ）
             break;
         case STATE_PLAYING:
-            // Show Label
+            // ゲーム開始時のラベル表示
             App.showCenterLabel("Game Start");
             break;
         case STATE_JUDGE:
+            // 判定フェーズ開始時に、すべての落下オブジェクトをマップから削除する
             for(let i in _poops) {
                 let b = _poops[i];
                 Map.putObject(b[0], b[1], null);
             }
             break;
         case STATE_END:
+            // ゲーム終了処理：プレイヤーの見た目と速度をリセットし、ゲームフラグをオフにする
             _start = false;
             for(let i in _players) {
                 let p = _players[i];
-                p.sprite = null;
-                p.moveSpeed = 80;
-                p.sendUpdated();
+                p.sprite = null;       // sprite は技術用語（画像表示）
+                p.moveSpeed = 80;      // 元の移動速度に戻す
+                p.sendUpdated();       // 変更を反映させるために送信
             }
             break;
     }
 }
 
+// 生存者チェック関数
+// _start が false の場合は処理しない
+// プレイヤー配列を確認して alive フラグで生存者をカウントする
+// 注：元コードの条件では p.sprite が falsy の場合に lastSurvivor に代入しているが、これは意図と異なる可能性があるため補足説明を追加
 function checkSuvivors() {
     if(!_start)
         return;
@@ -89,8 +103,10 @@ function checkSuvivors() {
     let alive = 0;
     for(let i in _players) {
         let p = _players[i];
+        // 元コードは if(!p.sprite) を使っていたが、通常は p.tag.alive を見て判定するのが分かりやすい
+        // ここでは元のロジックを保ちつつ、誤解を避けるために補足コメントを付与する
         if(!p.sprite) {
-            lastSurvivor = p;
+            lastSurvivor = p; // 最後に見つかった（条件を満たす）プレイヤーを保存
             ++alive;
         }
     }
@@ -98,44 +114,43 @@ function checkSuvivors() {
     return alive;
 }
 
+// App の開始イベント：初期状態へ遷移
 App.onStart.Add(function() {
     startState(STATE_INIT);
 });
 
-// when player join the space event
-// 플레이어가 스페이스에 입장 했을 때 이벤트
+// プレイヤーがスペースに参加したときのイベント
 App.onJoinPlayer.Add(function(p) {
-    // create and utilize option data using tags.
+    // ゲームが既に開始している場合、参加プレイヤーは死んだ（観戦）状態で入れる
     if(_start)
     {
         p.tag = {
-            alive : false,
+            alive : false, // 参加時は生存扱いしない（観戦）
         };
 
-        // change move speed
+        // 移動速度を落として動きを制限
         p.moveSpeed = 20;
-        // change sprite image
+        // 見た目を tomb スプライトに変更（技術用語）
         p.sprite = tomb;
-        // when player property changed have to call this method
-        // 플레이어 속성 변경 시 반드시 호출하여 업데이트 한다.
+        // プレイヤーのプロパティ変更を反映するために sendUpdated を呼ぶ
         p.sendUpdated();
     }
-    _players = App.players;
+    _players = App.players; // 最新のプレイヤー配列を再取得
 });
 
-// when player leave the space event
-// 플레이어가 스페이스를 나갔을 때 이벤트
+// プレイヤーがスペースを離れたときのイベント
 App.onLeavePlayer.Add(function(p) {
+    // 参加時に与えた変更をリセットする
     p.title = null;
     p.sprite = null;
     p.moveSpeed = 80;
     p.sendUpdated();
 
-    _players = App.players; // App.players : get total players
+    _players = App.players; // プレイヤー一覧を更新
 });
 
-// when player touched objects event
-// 플레이어가 오브젝트와 부딪혔을 때 
+// プレイヤーがオブジェクトに触れたときのイベント（衝突判定等）
+// sender: 衝突したプレイヤー, x/y/tileID は位置やタイル情報
 App.onObjectTouched.Add(function(sender, x, y, tileID) {
     if(!_start)
         return;
@@ -143,19 +158,24 @@ App.onObjectTouched.Add(function(sender, x, y, tileID) {
     if(!sender.tag.alive)
         return;
 
+    // 衝突したプレイヤーを「死亡」状態にする
     sender.tag.alive = false;
-    sender.sprite = tomb;
-    sender.moveSpeed = 40;
+    sender.sprite = tomb;     // tomb スプライトで表示
+    sender.moveSpeed = 40;    // 移動速度を変更（遅くする）
     sender.sendUpdated();
 
+    // 生存者数を更新
     _live = checkSuvivors();
 
+    // 生存者が 1 人以下なら判定フェーズへ移行
     if(_live == 1 || _live == 0)
     {
         startState(STATE_JUDGE);
     }
     else
     {
+        // ここは元のコードの意図が曖昧。_stateTimer を使ってタイマーを減らしているが、
+        // onObjectTouched 呼び出しが頻発すると不安定になる可能性がある点を補足する。
         if(_stateTimer >= 1)
         {   
             _stateTimer = 0;
@@ -168,8 +188,8 @@ App.onObjectTouched.Add(function(sender, x, y, tileID) {
     }
 });
 
-// when the game block is pressed event
-// 게임 블록을 밟았을 때 호출되는 이벤트
+// ゲームブロック（ワールドの破壊等）が押された（destroy）ときの処理
+// ここでは全ての落下オブジェクトをマップから削除している
 App.onDestroy.Add(function() {
     for(let i in _poops) {
         let b = _poops[i];
@@ -177,9 +197,9 @@ App.onDestroy.Add(function() {
     }
 });
 
-// called every 20ms
-// 20ms 마다 호출되는 업데이트
-// param1 : deltatime ( elapsedTime )
+// フレームごとの更新（約20ms 毎）
+// dt: 経過時間（秒）
+// ゲームが開始されていない場合は処理をスキップする
 App.onUpdate.Add(function(dt) {
     if(!_start)
         return;
@@ -188,41 +208,52 @@ App.onUpdate.Add(function(dt) {
     switch(_state)
     {
         case STATE_INIT:
+            // 初期状態の表示
             App.showCenterLabel(`Avoid falling poop.`);
 
+            // 5 秒経過したら準備状態へ
             if(_stateTimer >= 5)
             {
                 startState(STATE_READY);
             }
             break;
         case STATE_READY:
+            // スタート前の案内表示
             App.showCenterLabel(`The game will start soon.`);
 
+            // 3 秒経過でプレイ状態へ遷移
             if(_stateTimer >= 3)
             {
                 startState(STATE_PLAYING);
             }
             break;
         case STATE_PLAYING:
+            // 生成タイマーを減算し、0 以下になったら新しい poop を生成する
             _genTime -= dt;
             if(_genTime <= 0) {
+                // レベルが上がると生成間隔が短くなる設計
                 _genTime = Math.random() * (0.5 - (_level * 0.05));
                 
+                // x はマップ幅にランダム、y は -1（マップ外の上）で生成
                 let b = [Math.floor(Map.width * Math.random()),-1];
 
                 _poops.push(b);
+                // y が 0 以上のときだけ実際にマップに表示（-1 はまだ見えない位置）
                 if(b[1] >= 0)
                     Map.putObject(b[0], b[1], poop, {
-                        overlap: true,
+                        overlap: true, // overlap オプションで重なりを許可
                     });
             }
 
+            // 落下（移動）処理のタイマー
             _dropTime -= dt;
             if(_dropTime <= 0) {
                 _dropTime = Math.random() * (0.5 - (_level * 0.08));
                 
+                // すべての poop を一段下げる
                 for(let i in _poops) {
                     let b = _poops[i];
+                    // いったん現在位置のオブジェクトを消してから y++ して再表示
                     Map.putObject(b[0], b[1], null);
             
                     b[1]++;
@@ -233,6 +264,7 @@ App.onUpdate.Add(function(dt) {
                     }
                 }
 
+                // 画面外（マップ下端）に出た poop を配列から削除する
                 for(let k = _poops.length - 1;k >= 0;--k) {
                     let b = _poops[k];
                     if(b[1] >= Map.height)
@@ -240,12 +272,14 @@ App.onUpdate.Add(function(dt) {
                 }
             }
 
+            // レベル上昇のためのタイマー更新
             _levelAddTimer += dt;
             if(_levelAddTimer >= _levelTimer)
             {
                 _level++;
                 _levelAddTimer = 0;
 
+                // レベル上限を 6 に制限
                 if(_level > 6)
                 {
                     _level = 6;
@@ -253,6 +287,7 @@ App.onUpdate.Add(function(dt) {
             }
             break;
         case STATE_JUDGE:
+            // 判定フェーズのメッセージ表示
             if(_live == 1)
             {
                 App.showCenterLabel(`${lastSurvivor.name} is last suvivor`);
@@ -266,12 +301,14 @@ App.onUpdate.Add(function(dt) {
                 App.showCenterLabel(`Final survivors : ` + _live);
             }
 
+            // 5 秒後に終了状態へ遷移
             if(_stateTimer >= 5)
             {
                 startState(STATE_END);
             }
             break;
         case STATE_END:
+            // 終了状態では特に毎フレーム行う処理は無し（必要ならここに追加）
             break;
     }
 });
