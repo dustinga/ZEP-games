@@ -1,10 +1,10 @@
 // load sprite
 // スプライトシートを読み込む。sprite はそのまま技術用語（画像やアニメーションの単位）として残す
-let poop = App.loadSpritesheet('poop.png', 48, 43, [0], 16);
+let snowflake = App.loadSpritesheet('snowflake.png', 48, 43, [0], 16);
 
 // load sprite
 // スプライトシートを読み込む。向き別のアニメーション定義を与えている
-let tomb = App.loadSpritesheet('tomb.png', 32, 48, {
+let snowman = App.loadSpritesheet('snowman.png', 32, 48, {
     left: [0],  // 基本アニメーションを定義（left）
     right: [0], // 基本アニメーションを定義（right）
     up: [0],    // 基本アニメーションを定義（up）
@@ -26,7 +26,7 @@ let _levelAddTimer = 0;    // レベル昇格用の内部タイマー
 let _start = false;        // ゲームが開始しているかどうかのフラグ
 let _timer = 90;          // 制限時間（プレイ中に減る可能性のあるタイマー）
 
-let _poops = [];          // 落下オブジェクト（poop）の配列。各要素は [x, y]
+let _snowflakes = [];          // 落下オブジェクト（snowflake）の配列。各要素は [x, y]
 let _stateTimer = 0;      // 現在の状態(state)での経過時間（秒）
 
 let _genTime = 0;         // 次の生成までの時間
@@ -74,8 +74,8 @@ function startState(state)
             break;
         case STATE_JUDGE:
             // 判定フェーズ開始時に、すべての落下オブジェクトをマップから削除する
-            for(let i in _poops) {
-                let b = _poops[i];
+            for(let i in _snowflakes) {
+                let b = _snowflakes[i];
                 Map.putObject(b[0], b[1], null);
             }
             break;
@@ -130,8 +130,8 @@ App.onJoinPlayer.Add(function(p) {
 
         // 移動速度を落として動きを制限
         p.moveSpeed = 20;
-        // 見た目を tomb スプライトに変更（技術用語）
-        p.sprite = tomb;
+        // 見た目を snowman スプライトに変更（技術用語）
+        p.sprite = snowman;
         // プレイヤーのプロパティ変更を反映するために sendUpdated を呼ぶ
         p.sendUpdated();
     }
@@ -160,7 +160,7 @@ App.onObjectTouched.Add(function(sender, x, y, tileID) {
 
     // 衝突したプレイヤーを「死亡」状態にする
     sender.tag.alive = false;
-    sender.sprite = tomb;     // tomb スプライトで表示
+    sender.sprite = snowman;     // snowman スプライトで表示
     sender.moveSpeed = 40;    // 移動速度を変更（遅くする）
     sender.sendUpdated();
 
@@ -191,8 +191,8 @@ App.onObjectTouched.Add(function(sender, x, y, tileID) {
 // ゲームブロック（ワールドの破壊等）が押された（destroy）ときの処理
 // ここでは全ての落下オブジェクトをマップから削除している
 App.onDestroy.Add(function() {
-    for(let i in _poops) {
-        let b = _poops[i];
+    for(let i in _snowflakes) {
+        let b = _snowflakes[i];
         Map.putObject(b[0], b[1], null);
     }
 });
@@ -209,7 +209,7 @@ App.onUpdate.Add(function(dt) {
     {
         case STATE_INIT:
             // 初期状態の表示
-            App.showCenterLabel(`Avoid falling poop.`);
+            App.showCenterLabel(`Avoid falling snowflake.`);
 
             // 5 秒経過したら準備状態へ
             if(_stateTimer >= 5)
@@ -228,7 +228,7 @@ App.onUpdate.Add(function(dt) {
             }
             break;
         case STATE_PLAYING:
-            // 生成タイマーを減算し、0 以下になったら新しい poop を生成する
+            // 生成タイマーを減算し、0 以下になったら新しい snowflake を生成する
             _genTime -= dt;
             if(_genTime <= 0) {
                 // レベルが上がると生成間隔が短くなる設計
@@ -237,10 +237,10 @@ App.onUpdate.Add(function(dt) {
                 // x はマップ幅にランダム、y は -1（マップ外の上）で生成
                 let b = [Math.floor(Map.width * Math.random()),-1];
 
-                _poops.push(b);
+                _snowflakes.push(b);
                 // y が 0 以上のときだけ実際にマップに表示（-1 はまだ見えない位置）
                 if(b[1] >= 0)
-                    Map.putObject(b[0], b[1], poop, {
+                    Map.putObject(b[0], b[1], snowflake, {
                         overlap: true, // overlap オプションで重なりを許可
                     });
             }
@@ -250,25 +250,25 @@ App.onUpdate.Add(function(dt) {
             if(_dropTime <= 0) {
                 _dropTime = Math.random() * (0.5 - (_level * 0.08));
                 
-                // すべての poop を一段下げる
-                for(let i in _poops) {
-                    let b = _poops[i];
+                // すべての snowflake を一段下げる
+                for(let i in _snowflakes) {
+                    let b = _snowflakes[i];
                     // いったん現在位置のオブジェクトを消してから y++ して再表示
                     Map.putObject(b[0], b[1], null);
             
                     b[1]++;
                     if(b[1] < Map.height) {
-                        Map.putObject(b[0], b[1], poop, {
+                        Map.putObject(b[0], b[1], snowflake, {
                             overlap: true,
                         });
                     }
                 }
 
-                // 画面外（マップ下端）に出た poop を配列から削除する
-                for(let k = _poops.length - 1;k >= 0;--k) {
-                    let b = _poops[k];
+                // 画面外（マップ下端）に出た snowflake を配列から削除する
+                for(let k = _snowflakes.length - 1;k >= 0;--k) {
+                    let b = _snowflakes[k];
                     if(b[1] >= Map.height)
-                        _poops.splice(k, 1);
+                        _snowflakes.splice(k, 1);
                 }
             }
 
