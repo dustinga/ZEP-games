@@ -39,7 +39,6 @@ let _players = App.players; // 現在のプレイヤー一覧。App.players は�
 // ゲーム全体を開始する初期化処理
 function startApp()
 {
-    _start = true;
     _stateTimer = 0;
     _genTime = 0;
     _dropTime = 0;
@@ -47,18 +46,16 @@ function startApp()
 
     for(let i in _players) {
         let p = _players[i];
-        // プレイヤーごとのタグ（オプションデータ）を作成して管理
-        p.tag = {
-            alive : true, // 生存フラグ（true: 生存中）
-        };
+        AddNewPlayer(p);
     }
+    _start = true;
 }
 
 // 状態遷移処理（state をセットして初期化処理を行う）
 function startState(state)
 {
     _state = state;
-    _stateTImer = 0; // 注意: ここは元コードのスペルミス _stateTImer -> _stateTimer だが、意図的に元の変数名は変更していない
+    _stateTimer = 0; 
     switch(_state)
     {
         case STATE_INIT:
@@ -103,9 +100,7 @@ function checkSuvivors() {
     let alive = 0;
     for(let i in _players) {
         let p = _players[i];
-        // 元コードは if(!p.sprite) を使っていたが、通常は p.tag.alive を見て判定するのが分かりやすい
-        // ここでは元のロジックを保ちつつ、誤解を避けるために補足コメントを付与する
-        if(!p.sprite) {
+        if(p.tag && p.tag.alive) {
             lastSurvivor = p; // 最後に見つかった（条件を満たす）プレイヤーを保存
             ++alive;
         }
@@ -135,13 +130,24 @@ App.onJoinPlayer.Add(function(p) {
         // プレイヤーのプロパティ変更を反映するために sendUpdated を呼ぶ
         p.sendUpdated();
     }
+    else{
+        AddNewPlayer(p);
+    }
     _players = App.players; // 最新のプレイヤー配列を再取得
 });
+
+function AddNewPlayer(p){
+        // プレイヤーごとのタグ（オプションデータ）を作成して管理
+        p.tag = {
+            alive : true, // 生存フラグ（true: 生存中）
+        };
+        p.sendUpdated();
+}
 
 // プレイヤーがスペースを離れたときのイベント
 App.onLeavePlayer.Add(function(p) {
     // 参加時に与えた変更をリセットする
-    p.title = null;
+    p.title = null;d
     p.sprite = null;
     p.moveSpeed = 80;
     p.sendUpdated();
@@ -168,7 +174,7 @@ App.onObjectTouched.Add(function(sender, x, y, tileID) {
     _live = checkSuvivors();
 
     // 生存者が 1 人以下なら判定フェーズへ移行
-    if(_live == 1 || _live == 0)
+    if(_live == 0)
     {
         startState(STATE_JUDGE);
     }
@@ -209,7 +215,7 @@ App.onUpdate.Add(function(dt) {
     {
         case STATE_INIT:
             // 初期状態の表示
-            App.showCenterLabel(`Avoid falling snowflake.`);
+            App.showCenterLabel(`Avoid falling snowflakes.`);
 
             // 5 秒経過したら準備状態へ
             if(_stateTimer >= 5)
