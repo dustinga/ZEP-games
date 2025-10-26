@@ -134,6 +134,9 @@ App.onJoinPlayer.Add(function(p) {
         AddNewPlayer(p);
     }
     _players = App.players; // 最新のプレイヤー配列を再取得
+    numAlive = CheckSurvivors();
+    App.showCenterLabel(`Player added. Num alive: ` + _live);
+
 });
 
 function AddNewPlayer(p){
@@ -215,7 +218,7 @@ App.onUpdate.Add(function(dt) {
     {
         case STATE_INIT:
             // 初期状態の表示
-            App.showCenterLabel(`Avoid falling snowflakes.`);
+            App.showCenterLabel(`Avoid falling snowflakes. Num alive: ` + _live);
 
             // 5 秒経過したら準備状態へ
             if(_stateTimer >= 5)
@@ -225,7 +228,7 @@ App.onUpdate.Add(function(dt) {
             break;
         case STATE_READY:
             // スタート前の案内表示
-            App.showCenterLabel(`The game will start soon.`);
+            App.showCenterLabel(`The game will start soon. Num alive: ` + _live);
 
             // 3 秒経過でプレイ状態へ遷移
             if(_stateTimer >= 3)
@@ -318,3 +321,4 @@ App.onUpdate.Add(function(dt) {
             break;
     }
 });
+
