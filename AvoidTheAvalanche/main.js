@@ -134,8 +134,6 @@ App.onJoinPlayer.Add(function(p) {
         AddNewPlayer(p);
     }
     _players = App.players; // 最新のプレイヤー配列を再取得
-    numAlive = CheckSurvivors();
-    App.showCenterLabel(`Player added. Num alive: ` + _live);
 
 });
 
@@ -145,6 +143,9 @@ function AddNewPlayer(p){
             alive : true, // 生存フラグ（true: 生存中）
         };
         p.sendUpdated();
+    
+        numAlive = CheckSurvivors();
+        App.showCenterLabel(`Player added. Num alive: ` + _live);
 }
 
 // プレイヤーがスペースを離れたときのイベント
@@ -321,4 +322,5 @@ App.onUpdate.Add(function(dt) {
             break;
     }
 });
+
 
