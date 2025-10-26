@@ -116,6 +116,8 @@ App.onStart.Add(function() {
 
 // プレイヤーがスペースに参加したときのイベント
 App.onJoinPlayer.Add(function(p) {
+
+    App.showCenterLabel(`Player joined. Num alive: ` + _live);
     // ゲームが既に開始している場合、参加プレイヤーは死んだ（観戦）状態で入れる
     if(_start)
     {
@@ -144,7 +146,7 @@ function AddNewPlayer(p){
         };
         p.sendUpdated();
     
-        numAlive = checkSurvivors();
+        _live = checkSurvivors();
         App.showCenterLabel(`Player added. Num alive: ` + _live);
 }
 
@@ -322,6 +324,7 @@ App.onUpdate.Add(function(dt) {
             break;
     }
 });
+
 
 
 
