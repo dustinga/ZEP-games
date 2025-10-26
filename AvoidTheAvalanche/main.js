@@ -116,27 +116,11 @@ App.onStart.Add(function() {
 
 // プレイヤーがスペースに参加したときのイベント
 App.onJoinPlayer.Add(function(p) {
-
-    App.showCenterLabel(`Player joined. Num alive: ` + _live);
-    // ゲームが既に開始している場合、参加プレイヤーは死んだ（観戦）状態で入れる
-    if(_start)
-    {
-        p.tag = {
-            alive : false, // 参加時は生存扱いしない（観戦）
-        };
-
-        // 移動速度を落として動きを制限
-        p.moveSpeed = 20;
-        // 見た目を snowman スプライトに変更（技術用語）
-        p.sprite = snowman;
-        // プレイヤーのプロパティ変更を反映するために sendUpdated を呼ぶ
-        p.sendUpdated();
-    }
-    else{
-        AddNewPlayer(p);
-    }
+    AddNewPlayer(p);
     _players = App.players; // 最新のプレイヤー配列を再取得
-
+     _live = checkSurvivors();
+   App.showCenterLabel(`Player joined. Num alive: ` + _live);
+ 
 });
 
 function AddNewPlayer(p){
@@ -324,6 +308,7 @@ App.onUpdate.Add(function(dt) {
             break;
     }
 });
+
 
 
 
