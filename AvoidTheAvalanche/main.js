@@ -144,7 +144,7 @@ function AddNewPlayer(p){
         };
         p.sendUpdated();
     
-        numAlive = CheckSurvivors();
+        numAlive = checkSurvivors();
         App.showCenterLabel(`Player added. Num alive: ` + _live);
 }
 
@@ -322,5 +322,6 @@ App.onUpdate.Add(function(dt) {
             break;
     }
 });
+
 
 
